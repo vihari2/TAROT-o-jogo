@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Tarot - 3 Cartas</title>
+    <audio id="cardSound" src="../Jogo/Som/carta.mp3" preload="auto"></audio>
+    <style>
+        @charset "UTF-8";
+
+        @font-face {
+            font-family: 'ConnemaraBold';
+            src: url('../Jogo/Font/ConnemaraBold.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'ConnemaraBold', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(../Jogo/Imagens/darkback.jpg);
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+
+        }
+
+        h1 {
+            color: white;
+            font-size: 90px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .card {
+            background: #5d3a9b;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            width: 220px;
+            padding: 15px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+
+        .card h3 {
+            color: #fff;
+            margin: 10px 0;
+        }
+
+        .card p {
+            font-size: 14px;
+            text-align: left;
+            font-family: 'Tahoma', Geneva, Verdana, sans-serif;
+        }
+
+        button {
+            background-color: #5d3a9b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+             font-family: 'ConnemaraBold', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        button:hover {
+            background-color: #4a2d7d;
+        }
+
+        .orientation {
+            font-style: italic;
+            color: #fff;
+            font-family: 'Tahoma', Geneva, Verdana, sans-serif;
+        }
+
+
+        @keyframes pulseShadow {
+            0% {
+                box-shadow: 0 0 5px #686470;
+            }
+
+            50% {
+                box-shadow: 0 0 5px #817c8b;
+            }
+
+            100% {
+                box-shadow: 0 0 5px #686470;
+            }
+        }
+
+        .card:hover {
+            transform: rotateY(5deg) rotateX(5deg) scale(1.05);
+            box-shadow: 0 12px 24px rgba(91, 89, 95, 0.5);
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="bg-music" src="../Jogo/Som/musica_fundo.mp3" autoplay loop></audio>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px;">
+    <h1 style="margin: 0!important";>Tarot </h1>
+    <p style="color:#fff; margin: 0;">Clique no botão para revelar suas cartas</p>
+    <button id="draw-cards">Tirar Cartas</button>
+    </div>
+    <div class="container" id="cards-container">
+        <!-- As cartas serão inseridas aqui -->
+    </div>
+
+    <audio id="cardSound" src="../Jogo/Som/carta.mp3" preload="auto"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const drawButton = document.getElementById('draw-cards');
+            const cardsContainer = document.getElementById('cards-container');
+            let tarotDeck = [];
+
+            // Carregar o JSON com as cartas
+            async function loadTarotDeck() {
+                try {
+                    const response = await fetch('../JSON/cartas_tarot_traduzido.json');
+                    if (!response.ok) throw new Error('Erro ao carregar as cartas');
+                    const data = await response.json();
+                    tarotDeck = data.cartas;
+                    document.getElementById('cardSound').load();
+                } catch (error) {
+                    console.error("Erro:", error);
+                    alert("Não foi possível carregar as cartas. Verifique o console para detalhes.");
+                }
+            }
+
+            // Sortear 3 cartas aleatórias
+            function drawCards() {
+                if (tarotDeck.length === 0) {
+                    alert("As cartas ainda estão sendo carregadas. Tente novamente.");
+                    return;
+                }
+
+                // Toca o som
+                document.getElementById('cardSound').currentTime = 0;
+                document.getElementById('cardSound').play().catch(e => console.log(e));
+
+                // Limpar cartas anteriores
+                cardsContainer.innerHTML = '';
+
+                // Embaralhar o deck
+                const shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
+                const selectedCards = shuffledDeck.slice(0, 3);
+
+                // Exibir cartas com animação sequencial
+                selectedCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        const isReversed = Math.random() > 0.5;
+                        const cardElement = document.createElement('div');
+                        cardElement.className = 'card';
+                        cardElement.style.opacity = '0';
+                        cardElement.style.transform = 'translateY(50px)';
+                        cardElement.style.transition = 'all 0.8s ease-out';
+
+                        cardElement.innerHTML = `
+                ${card.image ? `<img src="imagens/${card.image.replace('../Imagens/', '')}" alt="${card.name}">` : ''}
+                <h3>${card.name}</h3>
+                <p><strong>Tipo:</strong> ${card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</p>
+                ${card.type === 'minor' ? `<p><strong>Naipe:</strong> ${getSuitName(card.name_short)}</p>` : ''}
+                <p class="orientation">${isReversed ? 'Invertida' : 'Normal'}</p>
+                <p><strong>Significado:</strong> ${isReversed ? card.meaning_rev : card.meaning_up}</p>
+            `;
+
+                        cardsContainer.appendChild(cardElement);
+
+                        // Força a renderização antes da animação
+                        setTimeout(() => {
+                            cardElement.style.opacity = '1';
+                            cardElement.style.transform = 'translateY(0)';
+                        }, 10);
+
+                    }, index * 600); // Intervalo de 500ms entre cartas
+                });
+            }
+
+            // Função para obter o nome do naipe (atualizada para "Ouros")
+            function getSuitName(nameShort) {
+                if (nameShort.startsWith('ar')) return 'N/A';
+                if (nameShort.includes('espadas')) return 'Espadas';
+                if (nameShort.includes('copas')) return 'Copas';
+                if (nameShort.includes('paus')) return 'Paus';
+                if (nameShort.includes('pentáculos') || nameShort.includes('ouros')) return 'Ouros';
+                return 'Desconhecido';
+            }
+
+            // Carregar o deck quando a página abrir
+            loadTarotDeck();
+
+            // Configurar o botão
+            drawButton.addEventListener('click', drawCards);
+        });
+    </script>
+</body>
+
+</html>

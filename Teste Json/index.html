@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Tarô</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #5d3a9b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        select, button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        button {
+            background-color: #5d3a9b;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #4a2d7d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #5d3a9b;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background-color: #f0e6ff;
+        }
+        .card-detail {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Baralho de Tarô</h1>
+    
+    <div class="controls">
+        <div>
+            <label for="tipo">Tipo:</label>
+            <select id="tipo">
+                <option value="all">Todos</option>
+                <option value="major">Arcanos Maiores</option>
+                <option value="minor">Arcanos Menores</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="naipe">Naipe:</label>
+            <select id="naipe">
+                <option value="all">Todos</option>
+                <option value="espadas">Espadas</option>
+                <option value="copas">Copas</option>
+                <option value="paus">Paus</option>
+                <option value="ouros">Ouros</option>
+            </select>
+        </div>
+        
+        <button id="carregar">Carregar Cartas</button>
+        <button id="reset">Resetar Filtros</button>
+    </div>
+    
+    <div id="loading" class="hidden">Carregando...</div>
+    <div id="error" class="error hidden"></div>
+    
+    <div id="card-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Naipe</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="card-list">
+                <!-- As cartas serão inseridas aqui -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div id="card-detail" class="card-detail hidden">
+        <h2 id="detail-name"></h2>
+        <p><strong>Tipo:</strong> <span id="detail-type"></span></p>
+        <p><strong>Naipe:</strong> <span id="detail-suit"></span></p>
+        <p><strong>Valor:</strong> <span id="detail-value"></span></p>
+        <p><strong>Significado Normal:</strong> <span id="detail-meaning-up"></span></p>
+        <p><strong>Significado Invertido:</strong> <span id="detail-meaning-rev"></span></p>
+        <p><strong>Descrição:</strong> <span id="detail-desc"></span></p>
+        <button id="close-detail">Fechar</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardList = document.getElementById('card-list');
+            const tipoFilter = document.getElementById('tipo');
+            const naipeFilter = document.getElementById('naipe');
+            const loadBtn = document.getElementById('carregar');
+            const resetBtn = document.getElementById('reset');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const cardTable = document.getElementById('card-table');
+            const cardDetail = document.getElementById('card-detail');
+            const closeDetailBtn = document.getElementById('close-detail');
+            
+            let tarotData = [];
+            
+            
+            async function loadJSON() {
+                try {
+                    loadingDiv.classList.remove('hidden');
+                    errorDiv.classList.add('hidden');
+                    cardTable.classList.add('hidden');
+                    
+                    const response = await fetch('../JSON/cartas_tarot_traduzido.json');
+                    if (!response.ok) {
+                        throw new Error('Erro ao carregar o arquivo JSON');
+                    }
+                    const data = await response.json();
+                    tarotData = data.cartas;
+                    displayCards(tarotData);
+                } catch (err) {
+                    errorDiv.textContent = `Erro: ${err.message}`;
+                    errorDiv.classList.remove('hidden');
+                } finally {
+                    loadingDiv.classList.add('hidden');
+                }
+            }
+            
+            
+            function displayCards(cards) {
+                cardList.innerHTML = '';
+                
+                if (cards.length === 0) {
+                    cardList.innerHTML = '<tr><td colspan="5">Nenhuma carta encontrada</td></tr>';
+                    cardTable.classList.remove('hidden');
+                    return;
+                }
+                
+                cards.forEach(card => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${card.name}</td>
+                        <td>${card.type === 'major' ? 'Maior' : 'Menor'}</td>
+                        <td>${getSuitName(card.name_short)}</td>
+                        <td>${card.value}</td>
+                        <td><button class="view-btn" data-id="${card.name_short}">Ver Detalhes</button></td>
+                    `;
+                    
+                    cardList.appendChild(row);
+                });
+                
+                
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const cardId = this.getAttribute('data-id');
+                        showCardDetails(cardId);
+                    });
+                });
+                
+                cardTable.classList.remove('hidden');
+            }
+            
+           
+            function filterCards() {
+                const tipo = tipoFilter.value;
+                const naipe = naipeFilter.value;
+                
+                let filtered = tarotData;
+                
+                if (tipo !== 'all') {
+                    filtered = filtered.filter(card => card.type === tipo);
+                }
+                
+                if (naipe !== 'all') {
+                    filtered = filtered.filter(card => {
+                        if (card.type === 'major') return false;
+                        return card.name_short.includes(naipe);
+                    });
+                }
+                
+                displayCards(filtered);
+            }
+            
+            
+            function showCardDetails(cardId) {
+                const card = tarotData.find(c => c.name_short === cardId);
+                if (!card) return;
+                
+                document.getElementById('detail-name').textContent = card.name;
+                document.getElementById('detail-type').textContent = card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor';
+                document.getElementById('detail-suit').textContent = card.type === 'major' ? 'N/A' : getSuitName(card.name_short);
+                document.getElementById('detail-value').textContent = card.value;
+                document.getElementById('detail-meaning-up').textContent = card.meaning_up;
+                document.getElementById('detail-meaning-rev').textContent = card.meaning_rev;
+                document.getElementById('detail-desc').textContent = card.desc;
+                
+                cardDetail.classList.remove('hidden');
+                cardTable.classList.add('hidden');
+            }
+            
+            // Obter nome do naipe
+            function getSuitName(nameShort) {
+                if (nameShort.startsWith('ar')) return 'N/A';
+                if (nameShort.includes('espadas')) return 'Espadas';
+                if (nameShort.includes('copas')) return 'Copas';
+                if (nameShort.includes('paus')) return 'Paus';
+                if (nameShort.includes('ouros')) return 'Ouros';
+                return 'Desconhecido';
+            }
+            
+            // Event Listeners
+            loadBtn.addEventListener('click', loadJSON);
+            resetBtn.addEventListener('click', function() {
+                tipoFilter.value = 'all';
+                naipeFilter.value = 'all';
+                if (tarotData.length > 0) {
+                    displayCards(tarotData);
+                }
+            });
+            
+            tipoFilter.addEventListener('change', filterCards);
+            naipeFilter.addEventListener('change', filterCards);
+            
+            closeDetailBtn.addEventListener('click', function() {
+                cardDetail.classList.add('hidden');
+                cardTable.classList.remove('hidden');
+            });
+            
+           
+        });
+    </script>
+</body>
+</html>
