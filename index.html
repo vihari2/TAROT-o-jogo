@@ -5,20 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo de Tarot - 3 Cartas</title>
-    <audio id="cardSound" src="../Som/carta.mp3" preload="auto"></audio>
+    <audio id="cardSound" src="Som/carta.mp3" preload="auto"></audio>
     <style>
         @charset "UTF-8";
 
         @font-face {
             font-family: 'ConnemaraBold';
-            src: url('../Font/ConnemaraBold.ttf') format('truetype');
+            src: url('/Font/ConnemaraBold.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
 
         body {
             font-family: 'ConnemaraBold', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(../Imagens/darkback.jpg);
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/Imagens/darkback.jpg);
             background-repeat: no-repeat;
             background-size: cover;
             background-attachment: fixed;
@@ -124,7 +124,7 @@
 </head>
 
 <body>
-    <audio id="bg-music" src="../Jogo/Som/musica_fundo.mp3" autoplay loop></audio>
+    <audio id="bg-music" src="Som/background.mp3" autoplay loop></audio>
     <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px;">
         <h1 style="margin: 0!important" ;>Tarot </h1>
         <p style="color:#fff; margin: 0;">Clique no botão para revelar suas cartas</p>
@@ -134,7 +134,7 @@
         <!-- As cartas serão inseridas aqui -->
     </div>
 
-    <audio id="cardSound" src="../Jogo/Som/carta.mp3" preload="auto"></audio>
+    <audio id="cardSound" src="/Som/carta.mp3" preload="auto"></audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -145,7 +145,7 @@
             // Carregar o JSON com as cartas
             async function loadTarotDeck() {
                 try {
-                    const response = await fetch('../JSON/cartas_tarot_traduzido.json');
+                    const response = await fetch('JSON/cartas_tarot_traduzido.json');
                     if (!response.ok) throw new Error('Erro ao carregar as cartas');
                     const data = await response.json();
                     tarotDeck = data.cartas;
@@ -156,25 +156,25 @@
                 }
             }
 
-            // Sortear 3 cartas aleatórias
+           
             function drawCards() {
                 if (tarotDeck.length === 0) {
                     alert("As cartas ainda estão sendo carregadas. Tente novamente.");
                     return;
                 }
 
-                // Toca o som
+               
                 document.getElementById('cardSound').currentTime = 0;
                 document.getElementById('cardSound').play().catch(e => console.log(e));
 
-                // Limpar cartas anteriores
+                
                 cardsContainer.innerHTML = '';
 
-                // Embaralhar o deck
+                
                 const shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
                 const selectedCards = shuffledDeck.slice(0, 3);
 
-                // Exibir cartas com animação sequencial
+                
                 selectedCards.forEach((card, index) => {
                     setTimeout(() => {
                         const isReversed = Math.random() > 0.5;
