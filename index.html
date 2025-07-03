@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo de Tarot - 3 Cartas</title>
-    <audio id="cardSound" src="Som/carta.mp3" preload="auto"></audio>
+    <audio id="cardSound" src="/Som/carta.mp3" preload="auto"></audio>
     <style>
         @charset "UTF-8";
 
@@ -124,7 +124,7 @@
 </head>
 
 <body>
-    <audio id="bg-music" src="Som/background.mp3" autoplay loop></audio>
+    <audio id="bg-music" src="/Som/background.mp3" autoplay loop></audio>
     <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px;">
         <h1 style="margin: 0!important" ;>Tarot </h1>
         <p style="color:#fff; margin: 0;">Clique no botão para revelar suas cartas</p>
@@ -156,25 +156,25 @@
                 }
             }
 
-           
+
             function drawCards() {
                 if (tarotDeck.length === 0) {
                     alert("As cartas ainda estão sendo carregadas. Tente novamente.");
                     return;
                 }
 
-               
+
                 document.getElementById('cardSound').currentTime = 0;
                 document.getElementById('cardSound').play().catch(e => console.log(e));
 
-                
+
                 cardsContainer.innerHTML = '';
 
-                
+
                 const shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
                 const selectedCards = shuffledDeck.slice(0, 3);
 
-                
+
                 selectedCards.forEach((card, index) => {
                     setTimeout(() => {
                         const isReversed = Math.random() > 0.5;
@@ -185,7 +185,7 @@
                         cardElement.style.transition = 'all 0.8s ease-out';
 
                         cardElement.innerHTML = `
-                ${card.image ? `<img src="imagens/${card.image.replace('../Imagens/', '').replace('Imagens/', '')}" alt="${card.name}">` : ''}
+                <img src="${card.image.replace('../', '')}" alt="${card.name}">
                 <h3>${card.name}</h3>
                 <p><strong>Tipo:</strong> ${card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</p>
                 ${card.type === 'minor' ? `<p><strong>Naipe:</strong> ${getSuitName(card.name_short)}</p>` : ''}
