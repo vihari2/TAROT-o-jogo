@@ -185,7 +185,7 @@
                         cardElement.style.transition = 'all 0.8s ease-out';
 
                         cardElement.innerHTML = `
-                ${card.image ? `<img src="imagens/${card.image.replace('../Imagens/', '')}" alt="${card.name}">` : ''}
+                ${card.image ? `<img src="imagens/${card.image.replace('../Imagens/', '').replace('Imagens/', '')}" alt="${card.name}">` : ''}
                 <h3>${card.name}</h3>
                 <p><strong>Tipo:</strong> ${card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</p>
                 ${card.type === 'minor' ? `<p><strong>Naipe:</strong> ${getSuitName(card.name_short)}</p>` : ''}
