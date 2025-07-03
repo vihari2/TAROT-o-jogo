@@ -18,7 +18,7 @@
 
         body {
             font-family: 'ConnemaraBold', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/Imagens/darkback.jpg);
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/Imagens/darkback.jpg');
             background-repeat: no-repeat;
             background-size: cover;
             background-attachment: fixed;
@@ -185,7 +185,7 @@
                         cardElement.style.transition = 'all 0.8s ease-out';
 
                         cardElement.innerHTML = `
-                ${card.image ? `<img src="/Imagens/${card.image.replace('../Imagens/', '')}" alt="${card.name}">` : ''}
+                ${card.image ? `<img src="imagens/${card.image.replace('../Imagens/', '')}" alt="${card.name}">` : ''}
                 <h3>${card.name}</h3>
                 <p><strong>Tipo:</strong> ${card.type === 'major' ? 'Arcano Maior' : 'Arcano Menor'}</p>
                 ${card.type === 'minor' ? `<p><strong>Naipe:</strong> ${getSuitName(card.name_short)}</p>` : ''}
