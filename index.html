@@ -134,7 +134,7 @@
 </head>
 
 <body>
-    <audio id="bg-music" src="Som/background.mp3" autoplay loop></audio>
+    <audio id="bg-music" src="Som/back.mp3" autoplay loop></audio>
     <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px;">
         <h1 style="margin: 0!important" ;>Tarot </h1>
         <p style="color:#fff; margin: 0;">Clique no botão para revelar suas cartas</p>
@@ -148,7 +148,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const audio = document.getElementById('bg-music');
+            audio.volume = 0.1; 
             const drawButton = document.getElementById('draw-cards');
+            const bgMusic = document.getElementById('bg-music');
             const cardsContainer = document.getElementById('cards-container');
             let tarotDeck = [];
 
@@ -232,8 +235,14 @@
             // Carregar o deck quando a página abrir
             loadTarotDeck();
 
-            // Configurar o botão
-            drawButton.addEventListener('click', drawCards);
+            drawButton.addEventListener('click', () => {
+
+                if (bgMusic.paused) {
+                    bgMusic.play().catch(e => console.log("Erro ao tocar música:", e));
+                }
+                drawCards();
+            });
+
         });
     </script>
 </body>
