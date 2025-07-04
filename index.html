@@ -43,6 +43,22 @@
             margin: 30px 0;
         }
 
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column !important;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .card {
+                width: 300px;
+                max-width: 80vw !Important;
+            }
+
+            .card-image {
+                width: 300px;
+            }
+        }
 
         .card h3 {
             color: #fff;
@@ -149,7 +165,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const audio = document.getElementById('bg-music');
-            audio.volume = 0.1; 
+            audio.volume = 0.1;
             const drawButton = document.getElementById('draw-cards');
             const bgMusic = document.getElementById('bg-music');
             const cardsContainer = document.getElementById('cards-container');
