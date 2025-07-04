@@ -53,6 +53,10 @@
             .card {
                 width: 250px;
                 max-width: 80vw !Important;
+                perspective: 1000px;
+                transform-style: preserve-3d;
+                transition: transform 0.3s ease;
+                border-radius: 10px;
             }
 
             .card-image {
@@ -113,12 +117,19 @@
             position: relative;
             overflow: hidden;
             max-width: 16vw;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+            border-radius: 10px;
         }
 
         .card-image img {
             width: 100%;
             border-radius: 10px;
             display: block;
+            transition: transform 0.1s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
         }
 
         .card-info {
@@ -145,6 +156,20 @@
         .card:hover .card-info {
             opacity: 1;
             pointer-events: auto;
+        }
+
+        .card-image {
+            transition: transform 0.4s ease;
+            transform-style: preserve-3d;
+        }
+
+        .card:hover .card-image {
+            transform: rotateY(10deg) rotateX(5deg);
+
+        }
+
+        .card:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -260,6 +285,27 @@
             });
 
         });
+
+        cardElement.addEventListener('mousemove', (e) => {
+            const rect = cardElement.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+
+            const image = cardElement.querySelector('.card-image');
+            image.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+
+        cardElement.addEventListener('mouseleave', () => {
+            const image = cardElement.querySelector('.card-image');
+            image.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        });
+
     </script>
 </body>
 
