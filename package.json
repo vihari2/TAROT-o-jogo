@@ -1,0 +1,22 @@
+{
+  "name": "tarot-o-jogo",
+  "version": "1.0.0",
+  "description": "Projeto de um jogo interativo de Tarot com quatro cartas aleatórias e seus significados.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo 'Build concluído'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vihari2/TAROT-o-jogo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vihari2/TAROT-o-jogo/issues"
+  },
+  "homepage": "https://github.com/vihari2/TAROT-o-jogo#readme"
+}

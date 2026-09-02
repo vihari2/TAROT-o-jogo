@@ -146,17 +146,22 @@
             transition: opacity 0.3s ease;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             text-align: center;
             pointer-events: none;
             line-height: 1.5rem;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
+            overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         .card:hover .card-info {
             opacity: 1;
             pointer-events: auto;
         }
+
+        .card-info::-webkit-scrollbar { width: 7px; }
+        .card-info::-webkit-scrollbar-thumb { background: #a98be0; border-radius: 8px; }
 
         .card-image {
             transition: transform 0.4s ease;
@@ -171,6 +176,34 @@
         .card:hover {
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
         }
+
+        #reveal-meaning { display: none; }
+
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0; z-index: 10;
+            align-items: center; justify-content: center; padding: 20px;
+            background: rgba(0, 0, 0, 0.72);
+        }
+        .modal-backdrop.is-open { display: flex; }
+        .modal {
+            position: relative; width: min(680px, 100%); max-height: 80vh;
+            overflow-y: auto; padding: 30px; border: 1px solid #a98be0;
+            border-radius: 12px; background: #1c102c;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); text-align: left;
+        }
+        .modal h2 { margin-top: 0; color: #e3d5ff; }
+        .modal-content { white-space: pre-wrap; font-family: Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; }
+        .modal-close { position: absolute; top: 8px; right: 12px; margin: 0; padding: 4px 10px; font-size: 24px; line-height: 1; }
+        .reading-summary { padding: 14px; border-left: 3px solid #a98be0; background: rgba(255, 255, 255, 0.08); }
+        .reading-summary p { margin: 0; }
+        .reading-cards-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+        .reading-card { padding: 14px; border: 1px solid rgba(169, 139, 224, 0.5); border-radius: 8px; background: rgba(0, 0, 0, 0.2); }
+        .reading-card h4, .reading-card h5 { margin: 0 0 8px; color: #e3d5ff; }
+        .reading-card img { display: block; width: min(120px, 100%); margin: 10px auto; border-radius: 6px; }
+        .reading-card img.is-reversed { transform: rotate(180deg); }
+        .reading-card p { white-space: normal; }
+        .reading-combinations { margin: 16px 0 0; padding-left: 20px; font-family: Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; }
+        @media (max-width: 600px) { .reading-cards-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 
@@ -185,6 +218,16 @@
         <!-- As cartas serão inseridas aqui -->
     </div>
 
+    <button id="reveal-meaning" type="button">Revelar o significado</button>
+
+    <div class="modal-backdrop" id="meaning-modal" aria-hidden="true">
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="meaning-title">
+            <button class="modal-close" id="close-modal" type="button" aria-label="Fechar">×</button>
+            <h2 id="meaning-title">A mensagem das suas cartas</h2>
+            <div class="modal-content" id="meaning-content" aria-live="polite"></div>
+        </section>
+    </div>
+
     <audio id="cardSound" src="Som/carta.mp3" preload="auto"></audio>
 
     <script>
@@ -194,7 +237,12 @@
             const drawButton = document.getElementById('draw-cards');
             const bgMusic = document.getElementById('bg-music');
             const cardsContainer = document.getElementById('cards-container');
+            const revealButton = document.getElementById('reveal-meaning');
+            const meaningModal = document.getElementById('meaning-modal');
+            const meaningContent = document.getElementById('meaning-content');
+            const closeModalButton = document.getElementById('close-modal');
             let tarotDeck = [];
+            let currentReading = [];
 
             // Carregar o JSON com as cartas
             async function loadTarotDeck() {
@@ -210,6 +258,99 @@
                 }
             }
 
+            function closeMeaningModal() {
+                meaningModal.classList.remove('is-open');
+                meaningModal.setAttribute('aria-hidden', 'true');
+            }
+
+            function revealMeaning() {
+                if (!currentReading.length) return;
+
+                meaningModal.classList.add('is-open');
+                meaningModal.setAttribute('aria-hidden', 'false');
+                meaningContent.replaceChildren();
+
+                const arcanosMaiores = currentReading.filter((carta) => carta.tipo === 'major').length;
+                const invertidas = currentReading.filter((carta) => carta.orientacao === 'invertida').length;
+                const contagemNaipes = currentReading.reduce((total, carta) => {
+                    if (carta.naipe) total[carta.naipe] = (total[carta.naipe] || 0) + 1;
+                    return total;
+                }, {});
+                const naipePredominante = Object.entries(contagemNaipes)
+                    .sort((a, b) => b[1] - a[1])[0];
+                const combinacoes = [];
+                let sintese;
+                if (arcanosMaiores >= 3) {
+                    sintese = 'Esta tiragem tem forte predominância de Arcanos Maiores, indicando um período de transformações e lições importantes.';
+                } else if (arcanosMaiores === 0) {
+                    sintese = 'A ausência de Arcanos Maiores sugere foco nas escolhas cotidianas, em situações práticas e em ações que trazem resultados mais imediatos.';
+                } else {
+                    sintese = 'A combinação entre Arcanos Maiores e Menores mostra equilíbrio entre grandes mudanças e sua capacidade de agir no dia a dia.';
+                }
+
+                if (naipePredominante && naipePredominante[1] >= 2) {
+                    const temas = {
+                        Copas: 'sentimentos, vínculos e relações afetivas',
+                        Espadas: 'pensamentos, decisões e comunicação',
+                        Paus: 'iniciativa, criatividade e energia para agir',
+                        Ouros: 'vida prática, recursos e segurança material'
+                    };
+                    combinacoes.push(`${naipePredominante[1]} cartas de ${naipePredominante[0]} reforçam temas de ${temas[naipePredominante[0]]}.`);
+                }
+
+                if (invertidas >= 3) {
+                    combinacoes.push('A maioria invertida sugere que parte desse processo pede revisão, pausa ou uma mudança de perspectiva antes de avançar.');
+                } else if (invertidas === 0) {
+                    combinacoes.push('Todas as cartas normais indicam uma energia mais direta: os assuntos da tiragem tendem a se mostrar com clareza e movimento.');
+                } else if (invertidas === 2) {
+                    combinacoes.push('O equilíbrio entre cartas normais e invertidas aponta para uma fase de ajustes: há caminhos abertos, mas também algo a reconsiderar.');
+                }
+
+                if (arcanosMaiores === 1) {
+                    combinacoes.push('O único Arcano Maior atua como tema central, enquanto as cartas menores mostram como lidar com ele na prática.');
+                } else if (arcanosMaiores === 2) {
+                    combinacoes.push('Os dois Arcanos Maiores destacam uma mudança importante sendo vivida junto aos desafios cotidianos.');
+                }
+
+                const titulo = document.createElement('h3');
+                titulo.textContent = 'Sua tiragem de 4 cartas';
+                const resumo = document.createElement('div');
+                resumo.className = 'reading-summary';
+                const textoSintese = document.createElement('p');
+                textoSintese.textContent = `Síntese conjunta: ${sintese}`;
+                resumo.appendChild(textoSintese);
+                const listaCombinacoes = document.createElement('ul');
+                listaCombinacoes.className = 'reading-combinations';
+                combinacoes.forEach((combinacao) => {
+                    const item = document.createElement('li');
+                    item.textContent = combinacao;
+                    listaCombinacoes.appendChild(item);
+                });
+                if (combinacoes.length) resumo.appendChild(listaCombinacoes);
+                const grade = document.createElement('div');
+                grade.className = 'reading-cards-grid';
+
+                currentReading.forEach((carta) => {
+                    const item = document.createElement('article');
+                    item.className = 'reading-card';
+                    const posicao = document.createElement('h4');
+                    posicao.textContent = carta.posicaoNarrativa;
+                    const imagem = document.createElement('img');
+                    imagem.src = carta.imagem;
+                    imagem.alt = carta.nome;
+                    if (carta.orientacao === 'invertida') imagem.className = 'is-reversed';
+                    const nome = document.createElement('h5');
+                    nome.textContent = `${carta.nome} (${carta.orientacao === 'invertida' ? 'Invertida' : 'Normal'})`;
+                    const significado = document.createElement('p');
+                    significado.textContent = carta.significado;
+                    item.append(posicao, imagem, nome, significado);
+                    grade.appendChild(item);
+                });
+
+                const conteudo = [titulo, resumo];
+                conteudo.push(grade);
+                meaningContent.append(...conteudo);
+            }
 
             function drawCards() {
                 if (tarotDeck.length === 0) {
@@ -223,15 +364,38 @@
 
 
                 cardsContainer.innerHTML = '';
+                revealButton.style.display = 'none';
+                closeMeaningModal();
 
 
-                const shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
-                const selectedCards = shuffledDeck.slice(0, 4);
+                const positionNames = [
+                    'O Ponto de Partida (Passado)',
+                    'O Desafio Atual (Presente)',
+                    'O Conselho Oculto',
+                    'O Desfecho (Futuro)'
+                ];
+                const deckCopy = [...tarotDeck];
+                const selectedCards = [];
+                for (let index = 0; index < 4; index += 1) {
+                    const randomIndex = Math.floor(Math.random() * deckCopy.length);
+                    selectedCards.push(deckCopy.splice(randomIndex, 1)[0]);
+                }
+                currentReading = [];
 
 
                 selectedCards.forEach((card, index) => {
                     setTimeout(() => {
                         const isReversed = Math.random() > 0.5;
+                        currentReading.push({
+                            nome: card.name,
+                            posicao: index + 1,
+                            posicaoNarrativa: positionNames[index],
+                            orientacao: isReversed ? 'invertida' : 'normal',
+                            significado: isReversed ? card.meaning_rev : card.meaning_up,
+                            tipo: card.type,
+                            naipe: card.type === 'minor' ? getSuitName(card.name_short) : null,
+                            imagem: card.image.replace('../', '')
+                        });
                         const cardElement = document.createElement('div');
                         cardElement.className = 'card';
                         cardElement.style.opacity = '0';
@@ -253,11 +417,25 @@
 
                         cardsContainer.appendChild(cardElement);
 
+                        cardElement.addEventListener('mousemove', (event) => {
+                            const rect = cardElement.getBoundingClientRect();
+                            const rotateX = ((event.clientY - rect.top - rect.height / 2) / (rect.height / 2)) * -10;
+                            const rotateY = ((event.clientX - rect.left - rect.width / 2) / (rect.width / 2)) * 10;
+                            cardElement.querySelector('.card-image').style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                        });
+                        cardElement.addEventListener('mouseleave', () => {
+                            cardElement.querySelector('.card-image').style.transform = 'rotateX(0deg) rotateY(0deg)';
+                        });
+
                         // Força a renderização antes da animação
                         setTimeout(() => {
                             cardElement.style.opacity = '1';
                             cardElement.style.transform = 'translateY(0)';
                         }, 10);
+
+                        if (index === selectedCards.length - 1) {
+                            setTimeout(() => { revealButton.style.display = 'inline-block'; }, 800);
+                        }
 
                     }, index * 600); // Intervalo de 500ms entre cartas
                 });
@@ -284,26 +462,15 @@
                 drawCards();
             });
 
-        });
+            revealButton.addEventListener('click', revealMeaning);
+            closeModalButton.addEventListener('click', closeMeaningModal);
+            meaningModal.addEventListener('click', (event) => {
+                if (event.target === meaningModal) closeMeaningModal();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeMeaningModal();
+            });
 
-        cardElement.addEventListener('mousemove', (e) => {
-            const rect = cardElement.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            const rotateX = ((y - centerY) / centerY) * -10;
-            const rotateY = ((x - centerX) / centerX) * 10;
-
-            const image = cardElement.querySelector('.card-image');
-            image.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        });
-
-        cardElement.addEventListener('mouseleave', () => {
-            const image = cardElement.querySelector('.card-image');
-            image.style.transform = 'rotateX(0deg) rotateY(0deg)';
         });
 
     </script>
